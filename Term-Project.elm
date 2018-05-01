@@ -24,14 +24,18 @@ main =
 type alias Model = {
  playerPos: Int,
  bullets: List(Int),
- enemies: List(Int)
+ enemies: List(Int),
+ mode: Int,
+ score: Int
 }
 
 --position currently using a 3x3 grid
 initialModel = {
    playerPos = 94,
    bullets = [],
-   enemies = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+   enemies = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19],
+   mode = 0,
+   score = 0
   }
 
 init : (Model, Cmd Msg)
@@ -42,33 +46,36 @@ type Msg = Presses Char
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
+  if (model.enemies == []) then ({playerPos = model.playerPos, bullets = model.bullets, enemies = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], mode = model.mode, score = model.score},Cmd.none)
+  else
   case msg of
     Presses code ->
-      let newEnemies = List.map (\ x->x+1) (remove model.bullets model.enemies []) in
+      let (enemies1 ,newScore) =  remove model.bullets model.enemies ([],model.score) in
+      let newEnemies = List.map (\ x->x+1) enemies1 in
       let newBullets = List.map (\ x->x-10) (removeBul model.bullets model.enemies []) in
       case (code, model.playerPos) of
         ('w', x)->
           if (x==0) || (x==1) || (x==2) || (x==3) || (x==4) || (x==5) || (x==6) || (x==7) || (x==8) || (x==9)then
-            ({playerPos = x, bullets = newBullets, enemies = newEnemies},Cmd.none)
+            ({playerPos = x, bullets = newBullets, enemies = newEnemies, mode = model.mode, score = newScore},Cmd.none)
           else
-            ({playerPos = x-10, bullets = newBullets, enemies = newEnemies},Cmd.none)
+            ({playerPos = x-10, bullets = newBullets, enemies = newEnemies, mode = model.mode, score = newScore},Cmd.none)
         ('a', x)->
           if (x==0) || (x==10) || (x==20) || (x==30) || (x==40)  || (x==50) || (x==60) || (x==70) || (x==80) || (x==90)then
-            ({playerPos = x, bullets = newBullets, enemies = newEnemies},Cmd.none)
+            ({playerPos = x, bullets = newBullets, enemies = newEnemies, mode = model.mode, score = newScore},Cmd.none)
           else
-            ({playerPos = x-1, bullets = newBullets, enemies = newEnemies},Cmd.none)
+            ({playerPos = x-1, bullets = newBullets, enemies = newEnemies, mode = model.mode, score = newScore},Cmd.none)
         ('s', x)->
           if (x==90) || (x==91) || (x==92) || (x==93) || (x==94)  || (x==95) || (x==96) || (x==97) || (x==98) || (x==99)then
-            ({playerPos = x, bullets = newBullets, enemies = newEnemies},Cmd.none)
+            ({playerPos = x, bullets = newBullets, enemies = newEnemies, mode = model.mode, score = newScore},Cmd.none)
           else
-            ({playerPos = x+10, bullets = newBullets, enemies = newEnemies},Cmd.none)
+            ({playerPos = x+10, bullets = newBullets, enemies = newEnemies, mode = model.mode, score = newScore},Cmd.none)
         ('d', x)->
           if (x==9) || (x==19) || (x==29) || (x==39) || (x==49) || (x==59) || (x==69) || (x==79) || (x==89) || (x==99) then
-            ({playerPos = x, bullets = newBullets, enemies = newEnemies},Cmd.none)
+            ({playerPos = x, bullets = newBullets, enemies = newEnemies, mode = model.mode, score = newScore},Cmd.none)
           else
-            ({playerPos = x+1, bullets = newBullets, enemies = newEnemies},Cmd.none)
+            ({playerPos = x+1, bullets = newBullets, enemies = newEnemies, mode = model.mode, score = newScore},Cmd.none)
         (' ',x)->
-            ({playerPos = x, bullets =  List.append newBullets [x-10], enemies = newEnemies},Cmd.none)
+            ({playerPos = x, bullets =  List.append newBullets [x-10], enemies = newEnemies, mode = model.mode, score = newScore},Cmd.none)
 
         (_,_)-> (model,Cmd.none)
 
@@ -137,15 +144,15 @@ bulletUpdate ls =
         ls
 
 --returns new list of enemies with the shot ones removed
-remove: List Int -> List Int -> List Int -> List Int
-remove bul bad new=
+remove: List Int -> List Int -> (List Int,Int) -> (List Int,Int)
+remove bul bad (list,score)=
   case bad of
-    [] -> new
+    [] -> (list,score)
     h::t ->
       if (member h bul) then
-        remove bul t new
+        remove bul t (list,score+10)
       else
-        remove bul t (new++[h])
+        remove bul t (list++[h],score)
 
 --returns new list of enemies with the shot ones removed
 removeBul: List Int -> List Int -> List Int -> List Int
@@ -163,4 +170,5 @@ view : Model -> Html Msg
 view model =
   let newBul = bulletUpdate model.bullets in
   let myMap =  generateMap model.playerPos newBul model.enemies 99 0 in
-  toHtml [] myMap
+  let final = String.append myMap (String.append "<br> <br> Score: " (toString model.score)) in
+  toHtml [] final
