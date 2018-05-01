@@ -1,3 +1,5 @@
+The Dependencies for this game are Gizra's elm keyboard and evancz's elm markdown. They can be downloaded with the following commands in terminal on Mac after installing the default elm packages.
+
 elm-package install Gizra/elm-keyboard-event
 
 elm-package install evancz/elm-markdown 
